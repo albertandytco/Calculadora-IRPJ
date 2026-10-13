@@ -170,7 +170,7 @@ def caminho_recurso(nome):
 class Aplicacao:
     def __init__(self, root):
         self.root = root
-        root.title('Calculadora do Adicional de Presunção - Lei 224/2025 - PROSOFT')
+        root.title('Calculadora do Adicional de Presunção - Lei 224/2025')
 
         # Ícone da janela do Tkinter
         root.iconbitmap(caminho_recurso('icone.ico'))
