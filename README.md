@@ -28,3 +28,26 @@ Uma ferramenta voltada à rotina contábil, que reúne cálculo e documentação
 | **PyInstaller** | Empacotamento do projeto como executável `.exe` para Windows. |
 
 O resultado apresentado corresponde à soma das bases de presunção calculadas conforme as regras implementadas neste projeto. O resumo permite conferir como cada receita contribuiu para esse valor. A intenção do projeto é criar uma ferramenta que resuma de forma prática e de fácil entendimento o cálculo realizado pelo sistema contábil, de acordo com a Lei  Complementar nº224/2025 instituída pelo governo para o cálculo de receitas de empresas que se enquadram na tributação do Lucro Presumido. 
+
+***Fluxo de funcionamento:*** 
+
+```mermaid
+graph TD;
+    A([Receitas digitadas]) --> B{Valores válidos?};
+    B -- Não --> C([Exibir mensagem de erro]);
+    B -- Sim --> D{Total ultrapassa o limite?};
+    D -- Não --> E([Aplicar percentuais normais às receitas]);
+    D -- Sim --> F([Distribuir limite e calcular excedentes]);
+    F --> G([Aplicar percentuais normais e acrescidos]);
+    E --> H([Somar bases calculadas]);
+    G --> H;
+    H --> I([Atualizar tabela e resumo]);
+    I --> J([Copiar ou salvar resumo]);
+
+    %% Cores e estilos personalizados
+    classDef default fill:#1e3a8a,stroke:#3b82f6,stroke-width:2px,color:#ffffff;
+    classDef decision fill:#0f172a,stroke:#60a5fa,stroke-width:2px,color:#ffffff;
+    classDef error fill:#7f1d1d,stroke:#f87171,stroke-width:2px,color:#ffffff;
+
+    class B,D decision;
+    class C error;
