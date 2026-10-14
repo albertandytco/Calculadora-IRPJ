@@ -27,4 +27,4 @@ Uma ferramenta voltada à rotina contábil, que reúne cálculo e documentação
 | **filedialog e messagebox** | Seleção do local de exportação e mensagens ao usuário. |
 | **PyInstaller** | Empacotamento do projeto como executável `.exe` para Windows. |
 
-O resultado apresentado corresponde à soma das bases de presunção calculadas conforme as regras implementadas no projeto. O resumo permite conferir como cada receita contribuiu para esse valor.
+O resultado apresentado corresponde à soma das bases de presunção calculadas conforme as regras implementadas neste projeto. O resumo permite conferir como cada receita contribuiu para esse valor. A intenção do projeto é criar uma ferramenta que resuma de forma prática e de fácil entendimento o cálculo realizado pelo sistema contábil, de acordo com a Lei  Complementar nº224/2025 instituída pelo governo para o cálculo de receitas de empresas que se enquadram na tributação do Lucro Presumido. 
