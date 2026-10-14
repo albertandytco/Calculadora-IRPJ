@@ -1,0 +1,74 @@
+Linha 02 (Receita 8%) = 590.265,70 / 1.626.271,99 * 100 = 36,30%
+A receita da linha 02 representa 36,30% do total da receita
+
+Linha 04 (Receita 32%) = 1.036.006,29 / 1.626.271,99 * 100 = 63,70% 
+A receita da linha 04 representa 63,70% do total da receita
+
+590.265,70 + 1.036.006,29 = 1.626.271,99 Total da receita 
+
+Limite proporcional da receita linha 02 = Limite do trimestre x Proporcional 
+1.250.000 x 36,30% = 453.750,00
+
+Limite proporcional da receita linha 04 = Limite do trimestre x Proporcional 
+1.250.000 x 63,70% = 796.250,00 
+
+Linha 2.1 = 590.265,70 - 453.750,00 = 136.515,70
+
+Linha 4.1 = 1.036.006,29 - 796.250,00 = 239.756,29
+
+Resultado da aplicação do trimestre: 
+
+(Linha 02)	Base 8%    = 	453.750,00   * 8%    = 36.300,00
+(Linha 02.1) 	Base 8,8%  =  	136.515,70   * 8,8%  = 12.013,38
+(Linha 04) 	Base 32%   = 	796.250,00   * 32%   = 254.800,00
+(Linha 04.1)	Base 35,2% =	239.756,29   * 35,2% = 84.394,21
+
+TOTAL DO RESULTADO DA APLICAÇÃO:
+
+36.300,00 + 12.013,38 + 254.800,00 + 84.394,21 = 387.507,60 
+
+-----------------------------------------------------------------------------------
+
+Vamos criar um projeto que consiste em realizar o calculo os valores de receitas das linhas 01, 01.01, 02, 02.01, 03, 03.01, 04 e 04.01;
+
+As linhas 01, 02, 03 e 04 serão chamadas de "Receita Bruta Sujeita ao Percentual ("X%")", onde será 1,6% , 8% , 16% e 32% respectivamente para cada linha ("no lugar do X%");
+
+As linhas 01.01, 02.01, 03.01 e 04.01 serão chamadas de "Presunção ao acréscimo 10%";
+
+As linhas 01, 02, 03 e 04 devem estar exibidas em um container que irá receber valores inseridos pelo usuário;
+
+A linha 01.01 será um container que deve ficar abaixo da linha 01; 
+A linha 02.01 será um container que deve ficar abaixo da linha 02; 
+A linha 03.01 será um container que deve ficar abaixo da linha 03; 
+A linha 04.01 será um container que deve ficar abaixo da linha 04; 
+
+
+A linha 01.01 deve ser o resultado do valor da linha 01 menos o "Limite Proporcional da linha X";
+A linha 02.01 deve ser o resultado do valor da linha 02 menos o "Limite Proporcional da linha X";
+A linha 03.01 deve ser o resultado do valor da linha 03 menos o "Limite Proporcional da linha X";
+A linha 04.01 deve ser o resultado do valor da linha 04 menos o "Limite Proporcional da linha X";
+
+
+O projeto terá uma variável chamada: "Limite do trimestre" que terá o valor fixo de 1.250.000,00 ;
+O projeto terá uma variável chamada: "Total das receitas" que será a soma do valor das linhas de "Receita bruta Sujeita ao percentual";
+
+Caso o "Total das receitas" seja menor que o "Limite do trimestre" as linhas de "Presunção do acréscimo 10%" deverá sempre ter valor 0; 
+
+Ao lado de cada linha deverá conter um campo que terá o "Valor Proporcional linha X" (onde "X" será o número da linha que essa variável estiver), que será o valor da receita em relação ao valor total das receitas das linhas em porcentagem, o total da porcentagem entre as receitas sempre deverá somar 100%. A fórmula para chegar a este valor será = "Receita Bruta sujeita ao percentual" da linha DIVIDIDO pelo "Total das receitas" MULTIPLICADO por 100; 
+
+O projeto terá uma variável chamada "Limite Proporcional da linha X" (onde "X" será o número da linha que essa variável estiver se referindo) que deverá ser: "Limite do Trimestre" MULTIPLICADO por "Valor Proporcional linha X", essa variável só será calculada caso o valor do total das receitas ultrapasse o valor do "Limite do trimestre"; 
+
+Abaixo de todas as linhas teremos uma linha chamada: "RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA", esta linha deve conter o resultado de uma função que realizará os seguintes cálculos caso exista valor em alguma linha de "Receita Bruta sujeita ao percentual": 
+
+Base 1,6% = "Limite Proporcional da linha 01" MULTIPLICADO por 1,6%;
+Base 1,76% = Valor da "Linha 01.01" MULTIPLICADO por 1,76%;
+Base 8%   = "Limite Proporcional da linha 02" MULTIPLICADO por 8%;
+Base 8,8%   = Valor da "Linha 02.01" MULTIPLICADO por 8,8%;
+Base 16%  = "Limite Proporcional da linha 03" MULTIPLICADO por 16%;
+Base 17,6%  = Valor da "Linha 03.01" MULTIPLICADO por 17,6%;
+Base 32%  = "Limite Proporcional da linha 04" MULTIPLICADO por 32%;
+Base 35,2%  = Valor da "Linha 04.01" MULTIPLICADO por 35,2%;
+
+O resultado do cálculo de cada variável deverá ser somado e apresentado na linha "RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA";
+ 
+Caso o valor do "Total das Receitas" não seja maior que o "Limite do trimestre" somente devem ser somado o resultado das variáveis: "Base 1,6%", "Base 8%", "Base 16%" e "Base 32%";
