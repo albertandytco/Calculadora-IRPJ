@@ -29,28 +29,27 @@ TOTAL DO RESULTADO DA APLICAÇÃO:
 
 -----------------------------------------------------------------------------------
 
-Vamos criar um projeto que consiste em realizar o calculo os valores de receitas das linhas 01, 01.01, 02, 02.01, 03, 03.01, 04 e 04.01;
+v0.1
+
+ O projeto consiste em realizar o cálculo dos valores de receitas das linhas 01, 01.01, 02, 02.01, 03, 03.01, 04 e 04.01 para determinar o valor do Resultado das aplicações dos percentuais sobre a receita bruta de acordo com a LC224/2025 para o cálculo do lucro presumido;
 
 As linhas 01, 02, 03 e 04 serão chamadas de "Receita Bruta Sujeita ao Percentual ("X%")", onde será 1,6% , 8% , 16% e 32% respectivamente para cada linha ("no lugar do X%");
 
 As linhas 01.01, 02.01, 03.01 e 04.01 serão chamadas de "Presunção ao acréscimo 10%";
 
-As linhas 01, 02, 03 e 04 devem estar exibidas em um container que irá receber valores inseridos pelo usuário;
+As linhas 01, 02, 03 e 04 devem estar exibidas em um container que recebe valores inseridos pelo usuário;
 
 A linha 01.01 será um container que deve ficar abaixo da linha 01; 
 A linha 02.01 será um container que deve ficar abaixo da linha 02; 
 A linha 03.01 será um container que deve ficar abaixo da linha 03; 
 A linha 04.01 será um container que deve ficar abaixo da linha 04; 
 
-
 A linha 01.01 deve ser o resultado do valor da linha 01 menos o "Limite Proporcional da linha X";
 A linha 02.01 deve ser o resultado do valor da linha 02 menos o "Limite Proporcional da linha X";
 A linha 03.01 deve ser o resultado do valor da linha 03 menos o "Limite Proporcional da linha X";
 A linha 04.01 deve ser o resultado do valor da linha 04 menos o "Limite Proporcional da linha X";
 
-
-O projeto terá uma variável chamada: "Limite do trimestre" que terá o valor fixo de 1.250.000,00 ;
-O projeto terá uma variável chamada: "Total das receitas" que será a soma do valor das linhas de "Receita bruta Sujeita ao percentual";
+O projeto terá uma variável chamada: "Limite do trimestre" que terá o valor fixo de 1.250.000,00, e uma variável chamada: "Total das receitas" que será a soma do valor das linhas de "Receita bruta Sujeita ao percentual";
 
 Caso o "Total das receitas" seja menor que o "Limite do trimestre" as linhas de "Presunção do acréscimo 10%" deverá sempre ter valor 0; 
 
@@ -72,3 +71,33 @@ Base 35,2%  = Valor da "Linha 04.01" MULTIPLICADO por 35,2%;
 O resultado do cálculo de cada variável deverá ser somado e apresentado na linha "RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA";
  
 Caso o valor do "Total das Receitas" não seja maior que o "Limite do trimestre" somente devem ser somado o resultado das variáveis: "Base 1,6%", "Base 8%", "Base 16%" e "Base 32%";
+
+-----------------------------------------------------------------------------------
+
+v0.2 
+
+Inserido as funções:
+ScrolledText -	Exibição do resumo com barra de rolagem.
+Filedialog e Messagebox -	Seleção do local de exportação e mensagens ao usuário.
+
+-----------------------------------------------------------------------------------
+
+v0.3 
+
+Esta parte é destinada à realizar um cálculo para apresentar o Imposto de Renda à Pagar.
+
+Inserido uma linha e variável chamada: "Rendimentos e Ganhos Líquidos de Aplicações Renda Fixa/Variável", essa linha recebe a entrada do usuário; 
+
+Inserido uma nova linha e variável chamada: "22. BASE DE CÁLCULO DO IMPOSTO SOBRE O LUCRO PRESUMIDO", esta linha armazena o resultado do seguinte cálculo: ("RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA" + "Rendimentos e Ganhos Líquidos de Aplicações Renda Fixa/Variável") e apresenta o resultado nesta mesma linha criada; 
+
+Inserido uma nova linha chamada: "23. À Alíquota de 15%" que deve contém o cálculo: ("22. BASE DE CÁLCULO DO IMPOSTO SOBRE O LUCRO PRESUMIDO" MULTIPLICADO por 15%), o resultado é apresentado nesta mesma linha. 
+
+Inserido uma nova linha chamada: "24. Adicional" que contém a seguinte função: Se o valor de ("22. BASE DE CÁLCULO DO IMPOSTO SOBRE O LUCRO PRESUMIDO") for acima de "60.000,00" deve ser aplicado o seguinte cálculo: ("22. BASE DE CÁLCULO DO IMPOSTO SOBRE O LUCRO PRESUMIDO" - "60.000,00" * por 10%), o resultado será apresentado nesta mesma linha; 
+
+Inserido uma nova linha chamada: "DEDUÇÕES" que o usuário deve inserir o valor de deduções nesta linha. 
+
+Por fim inserido a linha "34. IMPOSTO DE RENDA À PAGAR" que contém o seguinte cálculo: ("23. À Alíquota de 15%" + "24. Adicional" - "DEDUÇÕES"), esta última linha irá conter o resultado final do imposto de renda à pagar. 
+
+Cada um desses cálculos também são descritos no arquivo txt de forma que fique fácil o entendimento do que está sendo realizado, assim como foi feito na primeira etapa do projeto. 
+
+
