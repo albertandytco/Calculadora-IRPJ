@@ -5,10 +5,14 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import os
 import sys
 
+VERSAO_SISTEMA = '0.3'
 CENT = Decimal('0.01')
 LIMITE = Decimal('1250000.00')
 TAXAS = [Decimal('1.6'), Decimal('8'), Decimal('16'), Decimal('32')]
 LINHAS = ['01', '02', '03', '04']
+ALIQUOTA_IRPJ = Decimal('15.00')
+LIMITE_ADICIONAL_IRPJ = Decimal('60000.00')
+ALIQUOTA_ADICIONAL_IRPJ = Decimal('10.00')
 
 
 def arred(valor):
@@ -71,6 +75,30 @@ def calcular(receitas):
     return total, percentuais, limites, excessos, bases_normais, bases_acrescimo, resultado
 
 
+def calcular_irpj(resultado_presuncao, rendimentos, deducoes):
+    """Apura as linhas 22, 23, 24 e 34 pelas regras informadas no projeto.
+
+    A única informação recebida da primeira etapa é seu resultado final.
+    Cada valor monetário é arredondado a centavos antes da etapa seguinte.
+    """
+    resultado_presuncao = arred(resultado_presuncao)
+    rendimentos = arred(rendimentos)
+    deducoes = arred(deducoes)
+    base_calculo = arred(resultado_presuncao + rendimentos)
+    imposto_15 = arred(base_calculo * ALIQUOTA_IRPJ / 100)
+    base_adicional = arred(max(base_calculo - LIMITE_ADICIONAL_IRPJ, Decimal('0')))
+    adicional = arred(base_adicional * ALIQUOTA_ADICIONAL_IRPJ / 100)
+    # Preserva a subtração solicitada, inclusive se as deduções superarem o imposto.
+    imposto_pagar = arred(imposto_15 + adicional - deducoes)
+    return {
+        'base_calculo': base_calculo,
+        'imposto_15': imposto_15,
+        'base_adicional': base_adicional,
+        'adicional': adicional,
+        'imposto_pagar': imposto_pagar,
+    }
+
+
 def porcentagem(valor):
     return f'{arred(valor):.2f}%'.replace('.', ',')
 
@@ -121,7 +149,7 @@ def gerar_resumo(receitas, calculo):
         if total:
             textos.append(
                 f'Proporção = {moeda(receitas[i])} / {moeda(total)} x 100'
-                f' = {porcentagem(percentuais[i])} (Representa a proporção da receita em relação ao total)'
+                f' = {porcentagem(percentuais[i])} (após distribuição em duas casas)'
             )
         else:
             textos.append('Proporção: 0,00% (total zerado; não há divisão).')
@@ -159,6 +187,58 @@ def gerar_resumo(receitas, calculo):
     ])
     return '\n'.join(textos) + '\n'
 
+
+def gerar_resumo_irpj(resultado_presuncao, rendimentos, deducoes, calculo_irpj):
+    """Detalha a segunda etapa usando os mesmos resultados exibidos na janela."""
+    base = calculo_irpj['base_calculo']
+    imposto_15 = calculo_irpj['imposto_15']
+    adicional = calculo_irpj['adicional']
+    imposto_pagar = calculo_irpj['imposto_pagar']
+    textos = [
+        'SEGUNDA ETAPA - APURAÇÃO DO IMPOSTO DE RENDA',
+        '',
+        'RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA',
+        f'Valor recebido da primeira etapa: {moeda(resultado_presuncao)}',
+        '',
+        'Rendimentos e Ganhos Líquidos de Aplicações Renda Fixa/Variável',
+        f'Valor informado pelo usuário: {moeda(rendimentos)}',
+        '',
+        '22. BASE DE CÁLCULO DO IMPOSTO SOBRE O LUCRO PRESUMIDO',
+        'Resultado da primeira etapa + rendimentos e ganhos líquidos',
+        f'{moeda(resultado_presuncao)} + {moeda(rendimentos)} = {moeda(base)}',
+        '',
+        '23. À Alíquota de 15%',
+        f'Linha 22 x {porcentagem(ALIQUOTA_IRPJ)}',
+        f'{moeda(base)} x {porcentagem(ALIQUOTA_IRPJ)} = {moeda(imposto_15)}',
+        '',
+        '24. Adicional',
+    ]
+    if base > LIMITE_ADICIONAL_IRPJ:
+        textos.extend([
+            f'A linha 22 ultrapassou {moeda(LIMITE_ADICIONAL_IRPJ)}.',
+            f'Base do adicional = {moeda(base)} - {moeda(LIMITE_ADICIONAL_IRPJ)}'
+            f' = {moeda(calculo_irpj["base_adicional"])}',
+            f'Adicional = ({moeda(base)} - {moeda(LIMITE_ADICIONAL_IRPJ)})'
+            f' x {porcentagem(ALIQUOTA_ADICIONAL_IRPJ)} = {moeda(adicional)}',
+        ])
+    else:
+        textos.extend([
+            f'A linha 22 é menor ou igual a {moeda(LIMITE_ADICIONAL_IRPJ)}.',
+            'Não há parcela acima desse limite para aplicar o adicional.',
+            f'Adicional: {moeda(adicional)}',
+        ])
+    textos.extend([
+        '',
+        'DEDUÇÕES',
+        f'Valor informado pelo usuário: {moeda(deducoes)}',
+        '',
+        '34. IMPOSTO DE RENDA À PAGAR',
+        'Linha 23 + linha 24 - deduções',
+        f'{moeda(imposto_15)} + {moeda(adicional)} - {moeda(deducoes)}'
+        f' = {moeda(imposto_pagar)}',
+    ])
+    return '\n'.join(textos) + '\n'
+
 def caminho_recurso(nome):
     if getattr(sys, "frozen", False):
         pasta = sys._MEIPASS
@@ -170,11 +250,9 @@ def caminho_recurso(nome):
 class Aplicacao:
     def __init__(self, root):
         self.root = root
-        root.title('Calculadora do Adicional de Presunção - Lei 224/2025')
-
+        root.title('Calculadora de Presunção IRPJ')
         # Ícone da janela do Tkinter
         root.iconbitmap(caminho_recurso('icone.ico'))
-
         root.geometry('1200x900')
         root.minsize(1100, 760)
         self.entradas = []
@@ -185,6 +263,12 @@ class Aplicacao:
         self.bases_acrescimo = []
         self.total_var = tk.StringVar(value=moeda(0))
         self.resultado_var = tk.StringVar(value=moeda(0))
+        self.rendimentos_var = tk.StringVar(value='0,00')
+        self.deducoes_var = tk.StringVar(value='0,00')
+        self.base_calculo_irpj_var = tk.StringVar(value=moeda(0))
+        self.imposto_15_var = tk.StringVar(value=moeda(0))
+        self.adicional_var = tk.StringVar(value=moeda(0))
+        self.imposto_pagar_var = tk.StringVar(value=moeda(0))
         self.status_var = tk.StringVar(value='Informe as receitas para calcular.')
         style = ttk.Style()
         style.theme_use('clam')
@@ -193,13 +277,33 @@ class Aplicacao:
         style.configure('Destaque.TLabel', font=('Segoe UI', 12, 'bold'))
         corpo = ttk.Frame(root, padding=18)
         corpo.pack(fill='both', expand=True)
-        ttk.Label(corpo, text='Cálculo de Presunção e Acréscimo IRPJ', style='Titulo.TLabel').pack(anchor='w', pady=(0, 12))
-        topo = ttk.Frame(corpo)
+
+        # Cabeçalho: título à esquerda e versão à direita.
+        cabecalho = ttk.Frame(corpo)
+        cabecalho.pack(fill='x', pady=(0, 12))
+
+        ttk.Label(
+            cabecalho,
+            text='Cálculo de Presunção e Apuração IRPJ',
+            style='Titulo.TLabel',
+        ).pack(side='left')
+
+        ttk.Label(
+            cabecalho,
+            text=f'v{VERSAO_SISTEMA}',
+            font=('Segoe UI', 9),
+            foreground='#777777',
+        ).pack(side='right')
+        abas = ttk.Notebook(corpo)
+        abas.pack(fill='x', pady=(0, 8))
+        pagina_receitas = ttk.Frame(abas, padding=8)
+        abas.add(pagina_receitas, text='1. Receitas e presunção')
+        topo = ttk.Frame(pagina_receitas)
         topo.pack(fill='x', pady=(0, 12))
         ttk.Label(topo, text='Limite do trimestre: ' + moeda(LIMITE), style='Cab.TLabel').pack(side='left')
         ttk.Label(topo, text='Total das receitas: ', style='Cab.TLabel').pack(side='left', padx=(35, 0))
         ttk.Label(topo, textvariable=self.total_var, style='Destaque.TLabel').pack(side='left')
-        tabela = ttk.Frame(corpo)
+        tabela = ttk.Frame(pagina_receitas)
         tabela.pack(fill='x')
         colunas = ['Linha / descrição', 'Receita informada', 'Proporção', 'Limite proporcional', 'Excedente / base', 'Valor da presunção']
         larguras = [34, 19, 13, 21, 21, 20]
@@ -231,10 +335,11 @@ class Aplicacao:
             ttk.Label(tabela, textvariable=exced).grid(row=r+1, column=4, sticky='w')
             ttk.Label(tabela, textvariable=base_extra).grid(row=r+1, column=5, sticky='w')
             ttk.Separator(tabela).grid(row=r+1, column=0, columnspan=6, sticky='sew', pady=(25, 0))
-        rodape = ttk.Frame(corpo)
+        rodape = ttk.Frame(pagina_receitas)
         rodape.pack(fill='x', pady=(18, 10))
         ttk.Label(rodape, text='RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA', style='Cab.TLabel').pack(anchor='w')
         ttk.Label(rodape, textvariable=self.resultado_var, style='Titulo.TLabel').pack(anchor='w', pady=5)
+        self.criar_aba_irpj(abas)
         ttk.Label(corpo, textvariable=self.status_var).pack(anchor='w')
         botoes = ttk.Frame(corpo)
         botoes.pack(anchor='w', pady=12)
@@ -252,16 +357,77 @@ class Aplicacao:
         self.resumo = ''
         self.recalcular()
 
+    def criar_aba_irpj(self, abas):
+        pagina = ttk.Frame(abas, padding=14)
+        abas.add(pagina, text='2. Apuração do IRPJ')
+        pagina.columnconfigure(0, weight=1)
+        ttk.Label(
+            pagina,
+            text='RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA',
+            style='Cab.TLabel', wraplength=760,
+        ).grid(row=0, column=0, sticky='w', padx=(0, 16), pady=10)
+        ttk.Label(pagina, textvariable=self.resultado_var, style='Destaque.TLabel').grid(
+            row=0, column=1, sticky='e', pady=10,
+        )
+        ttk.Label(
+            pagina,
+            text='Rendimentos e Ganhos Líquidos de Aplicações Renda Fixa/Variável',
+            wraplength=760,
+        ).grid(row=1, column=0, sticky='w', padx=(0, 16), pady=12)
+        self.entrada_rendimentos = ttk.Entry(
+            pagina, textvariable=self.rendimentos_var, width=22,
+        )
+        self.entrada_rendimentos.grid(row=1, column=1, sticky='e', pady=12)
+        self.entrada_rendimentos.bind('<FocusOut>', self.recalcular)
+        self.entrada_rendimentos.bind('<Return>', self.recalcular)
+        ttk.Separator(pagina).grid(row=2, column=0, columnspan=2, sticky='ew', pady=8)
+        for linha, descricao, variavel in [
+            (3, '22. BASE DE CÁLCULO DO IMPOSTO SOBRE O LUCRO PRESUMIDO', self.base_calculo_irpj_var),
+            (4, '23. À Alíquota de 15%', self.imposto_15_var),
+            (5, '24. Adicional', self.adicional_var),
+        ]:
+            ttk.Label(
+                pagina, text=descricao, style='Cab.TLabel', wraplength=760,
+            ).grid(row=linha, column=0, sticky='w', padx=(0, 16), pady=12)
+            ttk.Label(pagina, textvariable=variavel, style='Destaque.TLabel').grid(
+                row=linha, column=1, sticky='e', pady=12,
+            )
+        ttk.Label(pagina, text='DEDUÇÕES', style='Cab.TLabel').grid(
+            row=6, column=0, sticky='w', pady=12,
+        )
+        self.entrada_deducoes = ttk.Entry(pagina, textvariable=self.deducoes_var, width=22)
+        self.entrada_deducoes.grid(row=6, column=1, sticky='e', pady=12)
+        self.entrada_deducoes.bind('<FocusOut>', self.recalcular)
+        self.entrada_deducoes.bind('<Return>', self.recalcular)
+        ttk.Separator(pagina).grid(row=7, column=0, columnspan=2, sticky='ew', pady=12)
+        ttk.Label(
+            pagina, text='34. IMPOSTO DE RENDA À PAGAR', style='Destaque.TLabel',
+        ).grid(row=8, column=0, sticky='w', pady=12)
+        ttk.Label(pagina, textvariable=self.imposto_pagar_var, style='Titulo.TLabel').grid(
+            row=8, column=1, sticky='e', pady=12,
+        )
+
     def recalcular(self, event=None):
         try:
             receitas = [ler_moeda(e.get()) for e in self.entradas]
+            rendimentos = ler_moeda(self.entrada_rendimentos.get())
+            deducoes = ler_moeda(self.entrada_deducoes.get())
         except (InvalidOperation, ValueError):
-            messagebox.showerror('Valor inválido', 'Informe valores positivos em formato brasileiro, por exemplo: 125.000,50')
+            messagebox.showerror(
+                'Valor inválido',
+                'Informe receitas, rendimentos e deduções com valores não negativos '
+                'em formato brasileiro, por exemplo: 125.000,50',
+            )
             return False
         calculo = calcular(receitas)
         total, percentuais, limites, excessos, normais, acrescimos, resultado = calculo
+        calculo_irpj = calcular_irpj(resultado, rendimentos, deducoes)
         self.total_var.set(moeda(total))
         self.resultado_var.set(moeda(resultado))
+        self.base_calculo_irpj_var.set(moeda(calculo_irpj['base_calculo']))
+        self.imposto_15_var.set(moeda(calculo_irpj['imposto_15']))
+        self.adicional_var.set(moeda(calculo_irpj['adicional']))
+        self.imposto_pagar_var.set(moeda(calculo_irpj['imposto_pagar']))
         for i in range(4):
             self.percentuais[i].set(f'{percentuais[i]:.2f}%'.replace('.', ','))
             self.limites[i].set(moeda(limites[i]))
@@ -269,7 +435,9 @@ class Aplicacao:
             self.bases_normais[i].set(moeda(normais[i]))
             self.bases_acrescimo[i].set(moeda(acrescimos[i]))
         self.status_var.set('Limite trimestral ultrapassado: acréscimo aplicado ao excedente.' if total > LIMITE else 'Dentro do limite trimestral: somente percentuais normais.')
-        self.resumo = gerar_resumo(receitas, calculo)
+        self.resumo = gerar_resumo(receitas, calculo) + '\n' + gerar_resumo_irpj(
+            resultado, rendimentos, deducoes, calculo_irpj,
+        )
         self.txt_resumo.configure(state=tk.NORMAL)
         self.txt_resumo.delete('1.0', tk.END)
         self.txt_resumo.insert('1.0', self.resumo)
@@ -305,7 +473,7 @@ class Aplicacao:
         self.status_var.set('Resumo salvo em TXT.')
 
     def limpar(self):
-        for entrada in self.entradas:
+        for entrada in self.entradas + [self.entrada_rendimentos, self.entrada_deducoes]:
             entrada.delete(0, tk.END)
             entrada.insert(0, '0,00')
         self.recalcular()
